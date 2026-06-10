@@ -1,4 +1,7 @@
 ## [1.0.0] - 2026-06-10
 - Polymorphic contacts attachable to any model (customers, vendors, anything) via a contactable morph
 - Owner-scoped through owner-access, with a HasContacts trait exposing contacts() and primaryContact()
+- Structured names (first_name, last_name, and a full_name accessor) plus email, phone, title, and address
 - One primary contact per parent, enforced automatically on save
+- Swappable Contact model via the contacts.model config
+- Optional UUID primary keys via the contacts.uuids config
