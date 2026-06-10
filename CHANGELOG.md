@@ -1,3 +1,6 @@
+## [1.0.1] - 2026-06-10
+- Require the released owner-access ^1.0 (was a dev branch)
+
 ## [1.0.0] - 2026-06-10
 - Polymorphic contacts attachable to any model (customers, vendors, anything) via a contactable morph
 - Owner-scoped through owner-access, with a HasContacts trait exposing contacts() and primaryContact()
