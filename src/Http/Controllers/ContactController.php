@@ -4,10 +4,11 @@ namespace Whilesmart\Contacts\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Controller;
+use Whilesmart\Contacts\Contracts\ResponseFormatter;
 use Whilesmart\Contacts\Http\Requests\StoreContactRequest;
 use Whilesmart\Contacts\Http\Requests\UpdateContactRequest;
-use Whilesmart\Contacts\Http\Resources\ContactResource;
 use Whilesmart\Contacts\Models\Contact;
 use Whilesmart\OwnerAccess\Concerns\AuthorizesOwnerController;
 
@@ -43,9 +44,9 @@ class ContactController extends Controller
             ->orderBy('first_name')
             ->paginate((int) $request->input('per_page', 25));
 
-        return response()->json([
+        return $this->response([
             'success' => true,
-            'data' => ContactResource::collection($contacts)->response()->getData(true),
+            'data' => $this->resource()::collection($contacts)->response()->getData(true),
         ]);
     }
 
@@ -54,9 +55,9 @@ class ContactController extends Controller
         $model = $this->model();
         $contact = $model::create($request->validated());
 
-        return response()->json([
+        return $this->response([
             'success' => true,
-            'data' => new ContactResource($contact),
+            'data' => new ($this->resource())($contact),
         ], 201);
     }
 
@@ -64,9 +65,9 @@ class ContactController extends Controller
     {
         $this->authorizeAccessTo($contact, $request->user());
 
-        return response()->json([
+        return $this->response([
             'success' => true,
-            'data' => new ContactResource($contact),
+            'data' => new ($this->resource())($contact),
         ]);
     }
 
@@ -75,9 +76,9 @@ class ContactController extends Controller
         $this->authorizeAccessTo($contact, $request->user());
         $contact->update($request->validated());
 
-        return response()->json([
+        return $this->response([
             'success' => true,
-            'data' => new ContactResource($contact->fresh()),
+            'data' => new ($this->resource())($contact->fresh()),
         ]);
     }
 
@@ -86,7 +87,7 @@ class ContactController extends Controller
         $this->authorizeAccessTo($contact, $request->user());
         $contact->delete();
 
-        return response()->json([
+        return $this->response([
             'success' => true,
             'message' => 'Contact deleted.',
         ]);
@@ -95,5 +96,21 @@ class ContactController extends Controller
     private function model(): string
     {
         return config('contacts.model', Contact::class);
+    }
+
+    private function resource(): string
+    {
+        $resource = config('contacts.resource');
+
+        if (! is_a($resource, JsonResource::class, true)) {
+            throw new \InvalidArgumentException('The configured contact resource must extend '.JsonResource::class.'.');
+        }
+
+        return $resource;
+    }
+
+    private function response(array $payload, int $statusCode = 200): JsonResponse
+    {
+        return app(ResponseFormatter::class)->format($payload, $statusCode);
     }
 }

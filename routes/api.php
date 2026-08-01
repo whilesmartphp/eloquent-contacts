@@ -1,6 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Whilesmart\Contacts\Http\Controllers\ContactController;
 
-Route::apiResource('contacts', ContactController::class);
+$routes = Route::apiResource('contacts', config('contacts.controller'))
+    ->only(config('contacts.route_actions'));
+
+$writeMiddleware = config('contacts.route_write_middleware', []);
+
+if ($writeMiddleware !== []) {
+    $routes->middlewareFor(['store', 'update', 'destroy'], $writeMiddleware);
+}
