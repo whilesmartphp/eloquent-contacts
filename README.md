@@ -15,6 +15,21 @@ php artisan migrate
 Routes register automatically under the `api` prefix with `auth:sanctum`. Set
 `CONTACTS_REGISTER_ROUTES=false` to mount them yourself.
 
+Applications can keep package-owned routes while replacing only the behavior they need:
+
+```php
+'controller' => \App\Http\Controllers\ContactController::class,
+'resource' => \App\Http\Resources\ContactResource::class,
+'response_formatter' => \App\Http\Responses\ContactResponseFormatter::class,
+'route_actions' => ['index', 'store', 'show'],
+'route_write_middleware' => ['workspace.write'],
+```
+
+The custom resource extends the package resource. The response formatter implements the package
+contract and receives the complete response payload and status code. The custom controller can
+extend the package controller as a final escape hatch. Write middleware applies to create, update,
+and delete actions that remain enabled.
+
 ## Attaching contacts to a model
 
 ```php

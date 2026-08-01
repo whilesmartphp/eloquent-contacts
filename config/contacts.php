@@ -1,6 +1,9 @@
 <?php
 
+use Whilesmart\Contacts\Http\Controllers\ContactController;
+use Whilesmart\Contacts\Http\Resources\ContactResource;
 use Whilesmart\Contacts\Models\Contact;
+use Whilesmart\Contacts\ResponseFormatters\DefaultResponseFormatter;
 
 return [
     // The Contact model. Override with your own (extending the package model
@@ -15,5 +18,10 @@ return [
     'register_routes' => env('CONTACTS_REGISTER_ROUTES', true),
     'route_prefix' => env('CONTACTS_ROUTE_PREFIX', 'api'),
     'route_middleware' => ['api', 'auth:sanctum'],
+    'route_write_middleware' => [],
+    'route_actions' => ['index', 'store', 'show', 'update', 'destroy'],
+    'controller' => ContactController::class,
+    'resource' => ContactResource::class,
+    'response_formatter' => DefaultResponseFormatter::class,
     'table' => env('CONTACTS_TABLE', 'contacts'),
 ];
