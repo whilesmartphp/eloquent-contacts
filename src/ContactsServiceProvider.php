@@ -4,6 +4,7 @@ namespace Whilesmart\Contacts;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Whilesmart\Contacts\Contracts\ResponseFormatter;
 use Whilesmart\Contacts\Models\Contact;
 
 class ContactsServiceProvider extends ServiceProvider
@@ -11,6 +12,11 @@ class ContactsServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/contacts.php', 'contacts');
+
+        $this->app->bind(
+            ResponseFormatter::class,
+            fn ($app): ResponseFormatter => $app->make(config('contacts.response_formatter')),
+        );
     }
 
     public function boot(): void

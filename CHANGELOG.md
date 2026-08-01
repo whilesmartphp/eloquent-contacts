@@ -1,3 +1,6 @@
+## [1.1.0] - 2026-08-01
+- Allow applications to configure contact routes, resources, response formatting, and controllers
+
 ## [1.0.1] - 2026-06-10
 - Require the released owner-access ^1.0 (was a dev branch)
 
