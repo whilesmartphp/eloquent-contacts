@@ -2,7 +2,6 @@
 
 namespace Whilesmart\Contacts\Models;
 
-use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,24 +12,14 @@ use Whilesmart\Contacts\Database\Factories\ContactFactory;
 
 class Contact extends Model
 {
-    use HasFactory, Sluggable, SoftDeletes;
+    use HasFactory, SoftDeletes;
 
-    protected $guarded = ['id', 'slug'];
+    protected $guarded = ['id', 'uuid'];
 
     protected $casts = [
         'is_primary' => 'boolean',
         'metadata' => 'array',
     ];
-
-    public function sluggable(): array
-    {
-        return ['slug' => ['source' => 'slug_seed', 'unique' => false, 'onUpdate' => false]];
-    }
-
-    protected function slugSeed(): Attribute
-    {
-        return Attribute::get(fn () => (string) Str::uuid());
-    }
 
     protected function fullName(): Attribute
     {
@@ -40,6 +29,8 @@ class Contact extends Model
     protected static function booted(): void
     {
         static::creating(function (Contact $contact) {
+            $contact->uuid = (string) Str::uuid();
+
             if (config('contacts.uuids', false) && empty($contact->{$contact->getKeyName()})) {
                 $contact->{$contact->getKeyName()} = (string) Str::orderedUuid();
             }

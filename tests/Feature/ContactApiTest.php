@@ -50,31 +50,35 @@ class ContactApiTest extends TestCase
     }
 
     #[Test]
-    public function contact_slugs_are_unique_and_survive_a_rename(): void
+    public function contact_uuids_are_unique_and_survive_a_rename(): void
     {
         $first = $this->postJson('/api/contacts', $this->payload())->assertCreated()->json('data');
         $second = $this->postJson('/api/contacts', $this->payload())->assertCreated()->json('data');
 
-        $this->assertTrue(Str::isUuid($first['slug']));
-        $this->assertNotSame($first['slug'], $second['slug']);
+        $this->assertTrue(Str::isUuid($first['uuid']));
+        $this->assertNotSame($first['uuid'], $second['uuid']);
         $this->putJson("/api/contacts/{$first['id']}", ['first_name' => 'Jo'])
-            ->assertOk()->assertJsonPath('data.slug', $first['slug']);
+            ->assertOk()->assertJsonPath('data.uuid', $first['uuid']);
     }
 
     #[Test]
-    public function upgrading_existing_contacts_assigns_stable_slugs(): void
+    public function upgrading_existing_contacts_assigns_stable_uuids(): void
     {
         $id = $this->postJson('/api/contacts', $this->payload())->assertCreated()->json('data.id');
-        Schema::table('contacts', fn (Blueprint $table) => $table->dropUnique(['slug']));
-        Schema::table('contacts', fn (Blueprint $table) => $table->dropColumn('slug'));
+        Schema::table('contacts', fn (Blueprint $table) => $table->dropUnique(['uuid']));
+        Schema::table('contacts', fn (Blueprint $table) => $table->dropColumn('uuid'));
 
-        $upgrade = require __DIR__.'/../../database/migrations/2026_11_18_000001_add_slugs_to_existing_contacts.php';
+        $upgrade = require __DIR__.'/../../database/migrations/2026_11_18_000001_add_uuids_to_existing_contacts.php';
         $upgrade->up();
-        $slug = $this->getJson("/api/contacts/{$id}")->assertOk()->json('data.slug');
-        $this->assertTrue(Str::isUuid($slug));
+        $uuid = $this->getJson("/api/contacts/{$id}")->assertOk()->json('data.uuid');
+        $this->assertTrue(Str::isUuid($uuid));
 
         $upgrade->up();
-        $this->getJson("/api/contacts/{$id}")->assertOk()->assertJsonPath('data.slug', $slug);
+        $this->getJson("/api/contacts/{$id}")->assertOk()->assertJsonPath('data.uuid', $uuid);
+
+        $upgrade->down();
+        $this->assertFalse(Schema::hasColumn('contacts', 'uuid'));
+        $this->assertDatabaseHas('contacts', ['id' => $id]);
     }
 
     #[Test]

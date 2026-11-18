@@ -21,7 +21,7 @@ return new class extends Migration
                 $table->nullableMorphs('contactable');
             }
 
-            $table->uuid('slug')->unique();
+            $table->uuid('uuid')->unique();
             $table->string('first_name');
             $table->string('last_name')->nullable();
             $table->string('email')->nullable();
