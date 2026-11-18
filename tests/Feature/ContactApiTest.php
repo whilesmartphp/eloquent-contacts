@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -73,7 +74,11 @@ class ContactApiTest extends TestCase
         $uuid = $this->getJson("/api/contacts/{$id}")->assertOk()->json('data.uuid');
         $this->assertTrue(Str::isUuid($uuid));
 
+        $legacyId = DB::table('contacts')->insertGetId($this->payload());
+        $this->getJson("/api/contacts/{$legacyId}")->assertOk()->assertJsonPath('data.uuid', null);
+
         $upgrade->up();
+        $this->assertTrue(Str::isUuid($this->getJson("/api/contacts/{$legacyId}")->assertOk()->json('data.uuid')));
         $this->getJson("/api/contacts/{$id}")->assertOk()->assertJsonPath('data.uuid', $uuid);
 
         $upgrade->down();
