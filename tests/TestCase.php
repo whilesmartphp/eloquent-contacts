@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use Cviebrock\EloquentSluggable\ServiceProvider as SluggableServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Whilesmart\Contacts\ContactsServiceProvider;
@@ -19,6 +20,7 @@ abstract class TestCase extends BaseTestCase
     protected function getPackageProviders($app): array
     {
         return [
+            SluggableServiceProvider::class,
             OwnerAccessServiceProvider::class,
             ContactsServiceProvider::class,
         ];

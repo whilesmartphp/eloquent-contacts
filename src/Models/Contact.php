@@ -2,6 +2,7 @@
 
 namespace Whilesmart\Contacts\Models;
 
+use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,14 +13,24 @@ use Whilesmart\Contacts\Database\Factories\ContactFactory;
 
 class Contact extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, Sluggable, SoftDeletes;
 
-    protected $guarded = ['id'];
+    protected $guarded = ['id', 'slug'];
 
     protected $casts = [
         'is_primary' => 'boolean',
         'metadata' => 'array',
     ];
+
+    public function sluggable(): array
+    {
+        return ['slug' => ['source' => 'slug_seed', 'unique' => false, 'onUpdate' => false]];
+    }
+
+    protected function slugSeed(): Attribute
+    {
+        return Attribute::get(fn () => (string) Str::uuid());
+    }
 
     protected function fullName(): Attribute
     {

@@ -10,6 +10,7 @@ class ContactResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'slug' => $this->slug,
             'owner_type' => $this->owner_type,
             'owner_id' => $this->owner_id,
             'contactable_type' => $this->contactable_type,
