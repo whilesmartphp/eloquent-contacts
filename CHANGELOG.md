@@ -1,3 +1,6 @@
+## [1.2.0]
+- Give each contact a stable UUID slug for links.
+
 ## [1.1.0] - 2026-08-01
 - Allow applications to configure contact routes, resources, response formatting, and controllers
 

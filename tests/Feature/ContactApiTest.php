@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Whilesmart\Contacts\Models\Contact;
@@ -44,6 +47,34 @@ class ContactApiTest extends TestCase
             'first_name' => 'Jane',
             'last_name' => 'Doe',
         ]);
+    }
+
+    #[Test]
+    public function contact_slugs_are_unique_and_survive_a_rename(): void
+    {
+        $first = $this->postJson('/api/contacts', $this->payload())->assertCreated()->json('data');
+        $second = $this->postJson('/api/contacts', $this->payload())->assertCreated()->json('data');
+
+        $this->assertTrue(Str::isUuid($first['slug']));
+        $this->assertNotSame($first['slug'], $second['slug']);
+        $this->putJson("/api/contacts/{$first['id']}", ['first_name' => 'Jo'])
+            ->assertOk()->assertJsonPath('data.slug', $first['slug']);
+    }
+
+    #[Test]
+    public function upgrading_existing_contacts_assigns_stable_slugs(): void
+    {
+        $id = $this->postJson('/api/contacts', $this->payload())->assertCreated()->json('data.id');
+        Schema::table('contacts', fn (Blueprint $table) => $table->dropUnique(['slug']));
+        Schema::table('contacts', fn (Blueprint $table) => $table->dropColumn('slug'));
+
+        $upgrade = require __DIR__.'/../../database/migrations/2026_11_18_000001_add_slugs_to_existing_contacts.php';
+        $upgrade->up();
+        $slug = $this->getJson("/api/contacts/{$id}")->assertOk()->json('data.slug');
+        $this->assertTrue(Str::isUuid($slug));
+
+        $upgrade->up();
+        $this->getJson("/api/contacts/{$id}")->assertOk()->assertJsonPath('data.slug', $slug);
     }
 
     #[Test]
