@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -63,6 +64,13 @@ class ContactApiTest extends TestCase
     }
 
     #[Test]
+    public function the_database_rejects_contacts_without_a_uuid(): void
+    {
+        $this->expectException(QueryException::class);
+        DB::table('contacts')->insert($this->payload());
+    }
+
+    #[Test]
     public function upgrading_existing_contacts_assigns_stable_uuids(): void
     {
         $id = $this->postJson('/api/contacts', $this->payload())->assertCreated()->json('data.id');
@@ -74,11 +82,9 @@ class ContactApiTest extends TestCase
         $uuid = $this->getJson("/api/contacts/{$id}")->assertOk()->json('data.uuid');
         $this->assertTrue(Str::isUuid($uuid));
 
-        $legacyId = DB::table('contacts')->insertGetId($this->payload());
-        $this->getJson("/api/contacts/{$legacyId}")->assertOk()->assertJsonPath('data.uuid', null);
+        $this->assertFalse(collect(Schema::getColumns('contacts'))->firstWhere('name', 'uuid')['nullable']);
 
         $upgrade->up();
-        $this->assertTrue(Str::isUuid($this->getJson("/api/contacts/{$legacyId}")->assertOk()->json('data.uuid')));
         $this->getJson("/api/contacts/{$id}")->assertOk()->assertJsonPath('data.uuid', $uuid);
 
         $upgrade->down();
