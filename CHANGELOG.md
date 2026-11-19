@@ -1,5 +1,6 @@
-## [1.2.0]
-- Give each contact a stable UUID.
+## [2.0.0]
+- Require a unique UUID for every contact. Eloquent assigns one on creation. Direct database inserts must supply one.
+- Pause contact writes during upgrade, run migrations, then start the updated application and workers.
 
 ## [1.1.0] - 2026-08-01
 - Allow applications to configure contact routes, resources, response formatting, and controllers
