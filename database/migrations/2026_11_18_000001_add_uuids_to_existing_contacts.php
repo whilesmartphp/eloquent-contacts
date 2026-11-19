@@ -12,13 +12,18 @@ return new class extends Migration
     {
         $table = config('contacts.table', 'contacts');
 
-        if (! Schema::hasColumn($table, 'uuid')) {
+        $column = collect(Schema::getColumns($table))->firstWhere('name', 'uuid');
+        if ($column === null) {
             Schema::table($table, fn (Blueprint $schema) => $schema->uuid('uuid')->nullable()->unique());
+        } elseif (! $column['nullable']) {
+            return;
         }
 
         DB::table($table)->whereNull('uuid')->select('id')->eachById(function ($contact) use ($table) {
             DB::table($table)->where('id', $contact->id)->whereNull('uuid')->update(['uuid' => (string) Str::uuid()]);
         });
+
+        Schema::table($table, fn (Blueprint $schema) => $schema->uuid('uuid')->nullable(false)->change());
     }
 
     public function down(): void
