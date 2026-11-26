@@ -6,9 +6,12 @@ use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Whilesmart\Contacts\ContactsServiceProvider;
 use Whilesmart\Contacts\Models\Contact;
 
 class ContactApiTest extends TestCase
@@ -71,13 +74,44 @@ class ContactApiTest extends TestCase
     }
 
     #[Test]
+    public function a_uuid_supplied_by_the_application_is_kept(): void
+    {
+        $uuid = (string) Str::uuid();
+        $contact = new Contact($this->payload());
+        $contact->uuid = $uuid;
+        $contact->save();
+
+        $this->getJson("/api/contacts/{$contact->id}")->assertOk()->assertJsonPath('data.uuid', $uuid);
+    }
+
+    #[Test]
+    public function a_supplied_uuid_must_be_valid(): void
+    {
+        $contact = new Contact($this->payload());
+        $contact->uuid = 'not-a-uuid';
+
+        $this->expectException(InvalidArgumentException::class);
+        $contact->save();
+    }
+
+    #[Test]
+    public function the_upgrade_runs_only_after_it_is_published(): void
+    {
+        $this->assertDatabaseMissing('migrations', ['migration' => '2026_11_18_000001_add_uuids_to_existing_contacts']);
+        $this->assertSame(
+            [realpath(__DIR__.'/../../database/upgrades/2026_11_18_000001_add_uuids_to_existing_contacts.php')],
+            array_map('realpath', array_keys(ServiceProvider::pathsToPublish(ContactsServiceProvider::class, 'contacts-upgrade-2'))),
+        );
+    }
+
+    #[Test]
     public function upgrading_existing_contacts_assigns_stable_uuids(): void
     {
         $id = $this->postJson('/api/contacts', $this->payload())->assertCreated()->json('data.id');
         Schema::table('contacts', fn (Blueprint $table) => $table->dropUnique(['uuid']));
         Schema::table('contacts', fn (Blueprint $table) => $table->dropColumn('uuid'));
 
-        $upgrade = require __DIR__.'/../../database/migrations/2026_11_18_000001_add_uuids_to_existing_contacts.php';
+        $upgrade = require __DIR__.'/../../database/upgrades/2026_11_18_000001_add_uuids_to_existing_contacts.php';
         $upgrade->up();
         $uuid = $this->getJson("/api/contacts/{$id}")->assertOk()->json('data.uuid');
         $this->assertTrue(Str::isUuid($uuid));

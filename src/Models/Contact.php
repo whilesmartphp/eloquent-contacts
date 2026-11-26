@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Whilesmart\Contacts\Database\Factories\ContactFactory;
 
 class Contact extends Model
@@ -29,7 +30,11 @@ class Contact extends Model
     protected static function booted(): void
     {
         static::creating(function (Contact $contact) {
-            $contact->uuid = (string) Str::uuid();
+            if (blank($contact->uuid)) {
+                $contact->uuid = (string) Str::uuid();
+            } elseif (! Str::isUuid($contact->uuid)) {
+                throw new InvalidArgumentException('Contact uuid must be a valid UUID.');
+            }
 
             if (config('contacts.uuids', false) && empty($contact->{$contact->getKeyName()})) {
                 $contact->{$contact->getKeyName()} = (string) Str::orderedUuid();
