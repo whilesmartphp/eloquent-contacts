@@ -31,6 +31,10 @@ class ContactsServiceProvider extends ServiceProvider
             __DIR__.'/../database/migrations' => database_path('migrations'),
         ], 'contacts-migrations');
 
+        $this->publishes([
+            __DIR__.'/../database/upgrades/2026_11_18_000001_add_uuids_to_existing_contacts.php' => database_path('migrations/2026_11_18_000001_add_uuids_to_existing_contacts.php'),
+        ], 'contacts-upgrade-2');
+
         Route::model('contact', config('contacts.model', Contact::class));
 
         if (config('contacts.register_routes', true)) {

@@ -72,6 +72,20 @@ class (extend the package model to add fields/casts/behaviour):
 The trait relations, route binding, and controller all resolve the class from config, so your
 model is used everywhere.
 
+## Contact UUIDs
+
+Every contact has a unique `uuid`, separate from its primary key, for use in links and external references. Eloquent assigns one on creation. An application that already has an identifier (for example during an import) can set `$contact->uuid` before saving; it must be a valid UUID. The API never accepts a `uuid` from the request.
+
+## Upgrading from 1.x
+
+2.0 makes `uuid` required. Fresh installs get it from the create migration. Existing installs add it with an upgrade migration that is not loaded automatically, so updating the package never changes the table on its own:
+
+1. Require `whilesmart/eloquent-contacts:^2.0`.
+2. Publish the upgrade migration: `php artisan vendor:publish --tag=contacts-upgrade-2`.
+3. Pause contact writes, run `php artisan migrate`, then start the updated application and workers.
+
+The migration adds the column, gives every existing contact a UUID, then makes the column required. Running it again does nothing.
+
 ## UUID keys
 
 Off by default (auto-incrementing integer ids). To use UUID primary keys, set `CONTACTS_UUIDS=true`

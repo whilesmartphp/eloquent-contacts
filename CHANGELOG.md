@@ -1,3 +1,7 @@
+## [2.0.0]
+- Require a unique UUID for every contact. Eloquent assigns one on creation unless the application supplies a valid one. Direct database inserts must supply one.
+- Existing installs upgrade only by publishing the upgrade migration. See "Upgrading from 1.x" in the README.
+
 ## [1.1.0] - 2026-08-01
 - Allow applications to configure contact routes, resources, response formatting, and controllers
 
